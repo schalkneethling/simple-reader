@@ -1,0 +1,76 @@
+{
+  "name": "simple-reader",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "varlock-wrangler dev",
+    "dev:ui": "vp dev",
+    "build": "tsc && vp build",
+    "preview": "vp preview",
+    "prepare": "vp config",
+    "test": "vp test --run",
+    "test:watch": "vp test",
+    "test:worker-runtime": "vp test --run --config vitest.worker.config.ts",
+    "test:e2e": "playwright test",
+    "typecheck": "tsc --noEmit",
+    "worker:types": "varlock-wrangler types",
+    "deploy": "npm run build && varlock-wrangler deploy",
+    "varlock:check": "varlock load --agent && varlock scan",
+    "lint": "stylelint \"**/*.{css,scss}\"",
+    "lint:fix": "stylelint \"**/*.{css,scss}\" --fix",
+    "react:doctor": "react-doctor --offline",
+    "react:doctor:diff": "react-doctor --offline --diff",
+    "quality": "vp check && npm run lint && npm run react:doctor && npm run varlock:check",
+    "doctor": "npx react-doctor@latest"
+  },
+  "dependencies": {
+    "@varlock/cloudflare-integration": "^1.2.1",
+    "dexie": "^4.4.4",
+    "dompurify": "^3.4.12",
+    "fast-xml-parser": "^5.10.0",
+    "lucide-react": "^1.24.0",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "react-router": "^8.2.0",
+    "varlock": "^1.10.0"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
+    "@cloudflare/vitest-pool-workers": "^0.18.4",
+    "@cloudflare/workers-types": "^5.20260714.1",
+    "@playwright/test": "^1.61.1",
+    "@schalkneethling/stylelint-plugin-css-property-type-validator": "^0.1.0-beta.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.3",
+    "fake-indexeddb": "^6.2.5",
+    "happy-dom": "^20.10.6",
+    "react-doctor": "^0.7.7",
+    "stylelint": "^17.14.0",
+    "stylelint-config-standard": "^40.0.0",
+    "stylelint-order": "^8.1.1",
+    "stylelint-plugin-use-baseline": "^1.4.4",
+    "typescript": "~6.0.2",
+    "vite": "npm:@voidzero-dev/vite-plus-core@0.2.4",
+    "vite-plus": "0.2.4",
+    "wrangler": "^4.110.0"
+  },
+  "overrides": {
+    "vite": "npm:@voidzero-dev/vite-plus-core@0.2.4"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "npm",
+      "version": "12.0.1",
+      "onFail": "download"
+    }
+  },
+  "allowScripts": {
+    "esbuild@0.28.1": true,
+    "workerd@1.20260708.1": true
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "version": 1,
+  "profile": "modern",
+  "integrations": [
+    "editorconfig",
+    "react-doctor",
+    "stylelint",
+    "stylelint-standard",
+    "stylelint-order",
+    "stylelint-baseline",
+    "css-property-type-validator"
+  ],
+  "files": [".editorconfig", ".stylelintrc.json", "react-doctor.config.json"],
+  "managedFiles": [
+    {
+      "path": ".editorconfig",
+      "hash": "3a15156"
+    },
+    {
+      "path": ".stylelintrc.json",
+      "hash": "0f0db2e"
+    },
+    {
+      "path": "react-doctor.config.json",
+      "hash": "433dce1"
+    }
+  ],
+  "aiArtifacts": [
+    {
+      "type": "skill",
+      "name": "css-coder",
+      "source": "skills/css-coder",
+      "path": ".agents/skills/css-coder",
+      "hash": "913d7a4"
+    },
+    {
+      "type": "skill",
+      "name": "css-tokens",
+      "source": "skills/css-tokens",
+      "path": ".agents/skills/css-tokens",
+      "hash": "6e5a8b9"
+    },
+    {
+      "type": "skill",
+      "name": "frontend-security",
+      "source": "skills/frontend-security",
+      "path": ".agents/skills/frontend-security",
+      "hash": "89dc4c2"
+    },
+    {
+      "type": "skill",
+      "name": "frontend-testing",
+      "source": "skills/frontend-testing",
+      "path": ".agents/skills/frontend-testing",
+      "hash": "03407df"
+    },
+    {
+      "type": "skill",
+      "name": "more-secure-dependabot-config",
+      "source": "skills/more-secure-dependabot-config",
+      "path": ".agents/skills/more-secure-dependabot-config",
+      "hash": "442567e"
+    },
+    {
+      "type": "skill",
+      "name": "semantic-html",
+      "source": "skills/semantic-html",
+      "path": ".agents/skills/semantic-html",
+      "hash": "07c1784"
+    }
+  ]
+}
