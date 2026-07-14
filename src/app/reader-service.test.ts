@@ -149,6 +149,23 @@ describe("LocalReaderService", () => {
 });
 
 describe("requestFeedApi", () => {
+  it("uses the configured Worker origin when the frontend is hosted separately", async () => {
+    const fetcher = vi.fn(async () =>
+      Response.json({ status: "error", code: "not_found", message: "" }),
+    );
+
+    await requestFeedApi(
+      "https://example.com/feed",
+      fetcher,
+      "https://simple-reader-api.example.workers.dev",
+    );
+
+    expect(fetcher).toHaveBeenCalledWith(
+      "https://simple-reader-api.example.workers.dev/api/feed?url=https%3A%2F%2Fexample.com%2Ffeed",
+      { headers: { accept: "application/json" } },
+    );
+  });
+
   it("rejects malformed JSON at the Worker-to-client trust boundary", async () => {
     const fetcher = vi.fn(async () => Response.json({ status: "ready" }));
 

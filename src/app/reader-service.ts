@@ -130,10 +130,16 @@ async function runWithConcurrency<Item>(
 export async function requestFeedApi(
   url: string,
   fetcher: typeof fetch = fetch,
+  apiOrigin = import.meta.env.VITE_API_ORIGIN,
 ): Promise<FeedApiResponse> {
-  const response = await fetcher(`/api/feed?url=${encodeURIComponent(url)}`, {
-    headers: { accept: "application/json" },
-  });
+  const endpoint = new URL("/api/feed", apiOrigin || "https://simple-reader.local");
+  endpoint.searchParams.set("url", url);
+  const response = await fetcher(
+    apiOrigin ? endpoint.href : `${endpoint.pathname}${endpoint.search}`,
+    {
+      headers: { accept: "application/json" },
+    },
+  );
   const body: unknown = await response.json();
   if (!isFeedApiResponse(body)) throw new Error("The feed service returned an invalid response.");
   return body;
