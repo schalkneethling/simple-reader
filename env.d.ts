@@ -18,13 +18,27 @@ export type CoercedEnvSchema = {
    */
   FEED_MAX_RESPONSE_BYTES: number;
   
+  /**
+   * **VITE_API_ORIGIN**  
+   * Public origin of the API-only Cloudflare Worker. Set this in Cloudflare Pages for production builds.  
+   * ![icon](data:image/svg+xml;utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cpath%20fill%3D%22%23808080%22%20d%3D%22M24%2021V9h-2v14h8v-2zm-4-6v-4c0-1.103-.897-2-2-2h-6v14h2v-6h1.48l2.335%206h2.145l-2.333-6H18c1.103%200%202-.897%202-2m-6-4h4v4h-4zM8%2023H4c-1.103%200-2-.897-2-2V9h2v12h4V9h2v12c0%201.103-.897%202-2%202%22%2F%3E%3C%2Fsvg%3E)   
+   */
+  VITE_API_ORIGIN?: string;
+  
+  /**
+   * **CORS_ALLOWED_ORIGINS**  
+   * Comma-separated Pages origins permitted to call the feed API.  
+   * ![icon](data:image/svg+xml;utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cpath%20fill%3D%22%23808080%22%20d%3D%22M29%2022h-5a2.003%202.003%200%200%201-2-2v-6a2%202%200%200%201%202-2h5v2h-5v6h5ZM18%2012h-4V8h-2v14h6a2.003%202.003%200%200%200%202-2v-6a2%202%200%200%200-2-2m-4%208v-6h4v6Zm-6-8H3v2h5v2H4a2%202%200%200%200-2%202v2a2%202%200%200%200%202%202h6v-8a2%202%200%200%200-2-2m0%208H4v-2h4Z%22%2F%3E%3C%2Fsvg%3E)   
+   */
+  CORS_ALLOWED_ORIGINS?: string;
+  
 };
 
-type _CoercedEnvSchema_8de014cf = CoercedEnvSchema;
+type _CoercedEnvSchema_a1d98a8b = CoercedEnvSchema;
 
 declare module 'varlock/env' {
-  export interface TypedEnvSchema extends Readonly<_CoercedEnvSchema_8de014cf> {}
-  export interface PublicTypedEnvSchema extends Readonly<Pick<_CoercedEnvSchema_8de014cf, 'FEED_CACHE_TTL_SECONDS' | 'FEED_MAX_RESPONSE_BYTES'>> {}
+  export interface TypedEnvSchema extends Readonly<_CoercedEnvSchema_a1d98a8b> {}
+  export interface PublicTypedEnvSchema extends Readonly<Pick<_CoercedEnvSchema_a1d98a8b, 'FEED_CACHE_TTL_SECONDS' | 'FEED_MAX_RESPONSE_BYTES' | 'VITE_API_ORIGIN' | 'CORS_ALLOWED_ORIGINS'>> {}
 }
 
 
@@ -34,17 +48,17 @@ export type EnvSchemaAsStrings = {
       : (CoercedEnvSchema[Property] extends boolean ? ('true' | 'false') : string)
 };
 
-type _EnvSchemaAsStrings_8de014cf = EnvSchemaAsStrings;
+type _EnvSchemaAsStrings_a1d98a8b = EnvSchemaAsStrings;
 declare global {
 
   // add types for global import.meta.env
-  interface ImportMetaEnv extends _EnvSchemaAsStrings_8de014cf {}
+  interface ImportMetaEnv extends _EnvSchemaAsStrings_a1d98a8b {}
   interface ImportMeta {
     readonly env: ImportMetaEnv;
   }
 
   // add types for global process.env
   namespace NodeJS {
-    interface ProcessEnv extends _EnvSchemaAsStrings_8de014cf {}
+    interface ProcessEnv extends _EnvSchemaAsStrings_a1d98a8b {}
   }
 }

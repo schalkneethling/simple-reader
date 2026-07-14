@@ -21,6 +21,7 @@ const SECURITY_HEADERS = {
 export interface WorkerConfig {
   cacheTtlSeconds: number;
   maxResponseBytes: number;
+  allowedOrigins?: readonly string[];
 }
 
 function configuredPositiveInteger(value: string | number, fallback: number): number {
@@ -30,10 +31,37 @@ function configuredPositiveInteger(value: string | number, fallback: number): nu
   return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : fallback;
 }
 
-function withSecurityHeaders(response: Response): Response {
+function withSecurityHeaders(
+  response: Response,
+  request: Request,
+  allowedOrigins: readonly string[],
+  isApiRequest: boolean,
+): Response {
   const secured = new Response(response.body, response);
   for (const [name, value] of Object.entries(SECURITY_HEADERS)) secured.headers.set(name, value);
+  if (isApiRequest) {
+    secured.headers.append("vary", "Origin");
+    const origin = request.headers.get("origin");
+    if (origin !== null && allowedOrigins.includes(origin)) {
+      secured.headers.set("access-control-allow-origin", origin);
+    }
+  }
   return secured;
+}
+
+export function parseAllowedOrigins(value: string | undefined): string[] {
+  if (value === undefined) return [];
+  return value
+    .split(",")
+    .map((origin) => origin.trim())
+    .flatMap((origin) => {
+      try {
+        const url = new URL(origin);
+        return url.protocol === "https:" && url.origin === origin ? [origin] : [];
+      } catch {
+        return [];
+      }
+    });
 }
 
 function isFeedCache(candidate: unknown): candidate is FeedCache {
@@ -73,10 +101,10 @@ export function createWorkerHandler(
     defer: context ? (promise) => context.waitUntil(promise) : undefined,
   });
   return async (request: Request): Promise<Response> => {
-    const response =
-      new URL(request.url).pathname === "/api/feed"
-        ? await handleFeed(request)
-        : await env.ASSETS.fetch(request);
-    return withSecurityHeaders(response);
+    const isApiRequest = new URL(request.url).pathname === "/api/feed";
+    const response = isApiRequest
+      ? await handleFeed(request)
+      : Response.json({ error: "Not found." }, { status: 404 });
+    return withSecurityHeaders(response, request, config.allowedOrigins ?? [], isApiRequest);
   };
 }
