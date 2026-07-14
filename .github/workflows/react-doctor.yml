@@ -34,12 +34,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Node 24 currently includes npm 11, while this project declares npm 12
-      # in devEngines. Install the required version before React Doctor reads
-      # package.json.
-      - name: Use required npm version
-        run: npm install --global npm@12.0.1
-
       - uses: millionco/react-doctor@v2
         # Advisory by default: React Doctor reports findings on every PR — a
         # sticky summary comment, inline review comments, and a commit status
