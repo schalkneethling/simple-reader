@@ -243,6 +243,9 @@ test("renders reader views as compact mobile navigation rows", async ({ page, is
   expect(Math.abs(allArticles.y - unread.y)).toBeLessThan(1);
   expect(Math.abs(unread.y - read.y)).toBeLessThan(1);
   expect(Math.abs(read.y - starred.y)).toBeLessThan(1);
+  expect(Math.abs(allArticles.height - unread.height)).toBeLessThan(1);
+  expect(Math.abs(unread.height - read.height)).toBeLessThan(1);
+  expect(Math.abs(read.height - starred.height)).toBeLessThan(1);
   expect(unread.x - (allArticles.x + allArticles.width)).toBeGreaterThanOrEqual(8);
   expect(read.x - (unread.x + unread.width)).toBeGreaterThanOrEqual(8);
   expect(starred.x - (read.x + read.width)).toBeGreaterThanOrEqual(8);
