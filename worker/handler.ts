@@ -49,6 +49,9 @@ export function createFeedHandler(dependencies: FeedHandlerDependencies) {
 
     try {
       const target = validateFetchUrl(input);
+      if (target.origin === requestUrl.origin) {
+        throw new FeedError("blocked_destination", "The feed endpoint cannot fetch itself.", 400);
+      }
       if (dependencies.rateLimit && !(await dependencies.rateLimit(request))) {
         return errorResponse(
           new FeedError("rate_limited", "Too many feed requests. Try again later.", 429),

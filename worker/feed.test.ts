@@ -99,6 +99,21 @@ describe("GET /api/feed", () => {
     expect(fetchUpstream).not.toHaveBeenCalled();
   });
 
+  it("rejects the Worker's own feed endpoint to prevent recursive public fetches", async () => {
+    const fetchUpstream = vi.fn();
+    const target = encodeURIComponent("https://reader.example/api/feed?url=https://example.com");
+    const response = await createFeedHandler({ fetchUpstream })(
+      request(`https://reader.example/api/feed?url=${target}`),
+    );
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({
+      status: "error",
+      code: "blocked_destination",
+    });
+    expect(fetchUpstream).not.toHaveBeenCalled();
+  });
+
   it("validates every redirect before following it", async () => {
     const fetchUpstream = vi.fn(
       async () =>
