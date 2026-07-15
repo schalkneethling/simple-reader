@@ -160,6 +160,36 @@ export function ReaderApp({ service, initialFeeds = [], initialArticles = [] }: 
     [service],
   );
 
+  const deleteArticle = useCallback(
+    async (article: Article) => {
+      setOperationError(null);
+      try {
+        await service.deleteArticle(article.id);
+        setArticles((current) => current.filter((item) => item.id !== article.id));
+      } catch {
+        setOperationError(`Could not delete ${article.title}.`);
+      }
+    },
+    [service],
+  );
+
+  const purgeReadArticles = useCallback(async () => {
+    const readCount = articles.filter((article) => article.readAt !== undefined).length;
+    if (
+      !window.confirm(
+        `Permanently delete ${readCount} read ${readCount === 1 ? "article" : "articles"}? This cannot be undone.`,
+      )
+    )
+      return;
+    setOperationError(null);
+    try {
+      await service.purgeReadArticles();
+      setArticles((current) => current.filter((article) => article.readAt === undefined));
+    } catch {
+      setOperationError("Could not delete the read articles.");
+    }
+  }, [articles, service]);
+
   const routeProps = { articles, feeds, onSetRead: setRead, onSetStarred: setStarred };
 
   return (
@@ -174,6 +204,7 @@ export function ReaderApp({ service, initialFeeds = [], initialArticles = [] }: 
       <div className="reader-shell">
         <ReaderSidebar
           feeds={feeds}
+          articles={articles}
           busyFeedId={busyFeedId}
           onRefresh={refresh}
           onRemove={removeFeed}
@@ -194,7 +225,7 @@ export function ReaderApp({ service, initialFeeds = [], initialArticles = [] }: 
               </p>
             )}
             <Routes>
-              <Route path="/" element={<Navigate to={READER_ROUTES.all} replace />} />
+              <Route path="/" element={<Navigate to={READER_ROUTES.unread} replace />} />
               <Route
                 path={READER_ROUTES.all}
                 element={<ArticleList title="All articles" {...routeProps} />}
@@ -206,7 +237,36 @@ export function ReaderApp({ service, initialFeeds = [], initialArticles = [] }: 
                     title="Unread"
                     {...routeProps}
                     articles={articles.filter((article) => article.readAt === undefined)}
+                    emptyMessage="No unread articles."
                   />
+                }
+              />
+              <Route
+                path={READER_ROUTES.read}
+                element={
+                  <>
+                    {articles.some((article) => article.readAt !== undefined) ? (
+                      <button
+                        className="danger-action"
+                        type="button"
+                        onClick={() => void purgeReadArticles()}
+                      >
+                        Permanently delete all{" "}
+                        {articles.filter((article) => article.readAt !== undefined).length} read{" "}
+                        {articles.filter((article) => article.readAt !== undefined).length === 1
+                          ? "article"
+                          : "articles"}
+                      </button>
+                    ) : null}
+                    <ArticleList
+                      title="Read"
+                      {...routeProps}
+                      articles={articles.filter((article) => article.readAt !== undefined)}
+                      onDeleteArticle={deleteArticle}
+                      readView
+                      emptyMessage="No read articles."
+                    />
+                  </>
                 }
               />
               <Route
@@ -221,7 +281,7 @@ export function ReaderApp({ service, initialFeeds = [], initialArticles = [] }: 
               />
               <Route path={READER_ROUTES.feed} element={<FeedRoute {...routeProps} />} />
               <Route path={READER_ROUTES.article} element={<ArticleRoute {...routeProps} />} />
-              <Route path="*" element={<Navigate to={READER_ROUTES.all} replace />} />
+              <Route path="*" element={<Navigate to={READER_ROUTES.unread} replace />} />
             </Routes>
           </div>
         </main>

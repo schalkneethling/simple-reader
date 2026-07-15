@@ -20,6 +20,8 @@ export interface ReaderStorage {
   removeFeed: (id: string) => Promise<void>;
   markRead: (id: string, read: boolean) => Promise<unknown>;
   setStarred: (id: string, starred: boolean) => Promise<unknown>;
+  deleteArticle: (id: string) => Promise<void>;
+  purgeReadArticles: () => Promise<unknown>;
 }
 
 export type FeedRequest = (url: string) => Promise<FeedApiResponse>;
@@ -76,6 +78,14 @@ export class LocalReaderService implements ReaderService {
 
   async setStarred(articleId: string, starred: boolean): Promise<void> {
     await this.storage.setStarred(articleId, starred);
+  }
+
+  async deleteArticle(articleId: string): Promise<void> {
+    await this.storage.deleteArticle(articleId);
+  }
+
+  async purgeReadArticles(): Promise<void> {
+    await this.storage.purgeReadArticles();
   }
 
   async snapshot(): Promise<RefreshResult> {

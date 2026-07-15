@@ -222,6 +222,23 @@ describe("ReaderRepository", () => {
     );
   });
 
+  it("permanently deletes one article and purges only read articles", async () => {
+    const subscribed = await repository.subscribeFeed(feed);
+    const [unread, read, anotherRead] = await repository.ingestArticles(subscribed.id, [
+      { guid: "unread", url: "https://example.com/unread", title: "Unread" },
+      { guid: "read", url: "https://example.com/read", title: "Read" },
+      { guid: "read-2", url: "https://example.com/read-2", title: "Read two" },
+    ]);
+    await repository.markRead(read.id);
+    await repository.markRead(anotherRead.id);
+
+    await repository.deleteArticle(read.id);
+    expect(await repository.getArticle(read.id)).toBeUndefined();
+
+    await expect(repository.purgeReadArticles()).resolves.toBe(1);
+    expect(await repository.listArticles()).toEqual([expect.objectContaining({ id: unread.id })]);
+  });
+
   it("keeps only the latest 200 non-starred articles per feed while retaining stars", async () => {
     const subscribed = await repository.subscribeFeed(feed);
     const normalized = Array.from({ length: 202 }, (_, index) => ({

@@ -51,6 +51,8 @@ function storage(initialFeeds: Feed[] = []): ReaderStorage {
     removeFeed: vi.fn(async () => undefined),
     markRead: vi.fn(async () => undefined),
     setStarred: vi.fn(async () => undefined),
+    deleteArticle: vi.fn(async () => undefined),
+    purgeReadArticles: vi.fn(async () => undefined),
   };
 }
 
@@ -64,6 +66,16 @@ function ready(title: string): FeedApiResponse {
 }
 
 describe("LocalReaderService", () => {
+  it("persists individual and bulk read-article deletion", async () => {
+    const repository = storage();
+    const service = new LocalReaderService(repository, vi.fn());
+
+    await service.deleteArticle("article-1");
+    await service.purgeReadArticles();
+
+    expect(repository.deleteArticle).toHaveBeenCalledWith("article-1");
+    expect(repository.purgeReadArticles).toHaveBeenCalledOnce();
+  });
   it("persists a normalized feed response when subscribing", async () => {
     const repository = storage();
     const request = vi.fn(async () => ready("news"));

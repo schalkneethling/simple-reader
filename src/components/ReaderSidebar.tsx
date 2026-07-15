@@ -1,9 +1,10 @@
-import { CircleDot, Inbox, RefreshCw, Rss, Star, Trash2 } from "lucide-react";
-import type { Feed } from "../domain/types";
+import { CircleDot, Inbox, RefreshCw, RotateCcw, Rss, Star, Trash2 } from "lucide-react";
+import type { Article, Feed } from "../domain/types";
 import { ViewTransitionNavLink } from "./ViewTransitionLink";
 
 interface ReaderSidebarProps {
   feeds: Feed[];
+  articles: Article[];
   busyFeedId: string | null;
   onRefresh: (feedId?: string) => Promise<void>;
   onRemove: (feed: Feed) => Promise<void>;
@@ -13,7 +14,19 @@ function navClassName({ isActive }: { isActive: boolean }) {
   return isActive ? "nav-link nav-link-active" : "nav-link";
 }
 
-export function ReaderSidebar({ feeds, busyFeedId, onRefresh, onRemove }: ReaderSidebarProps) {
+function countLabel(count: number): string {
+  return `${count} ${count === 1 ? "article" : "articles"}`;
+}
+
+export function ReaderSidebar({
+  feeds,
+  articles,
+  busyFeedId,
+  onRefresh,
+  onRemove,
+}: ReaderSidebarProps) {
+  const unreadCount = articles.filter((article) => article.readAt === undefined).length;
+  const readCount = articles.length - unreadCount;
   return (
     <aside className="reader-sidebar">
       <div className="sidebar-overview">
@@ -27,9 +40,29 @@ export function ReaderSidebar({ feeds, busyFeedId, onRefresh, onRemove }: Reader
               </ViewTransitionNavLink>
             </li>
             <li>
-              <ViewTransitionNavLink to="/unread" className={navClassName}>
+              <ViewTransitionNavLink
+                to="/unread"
+                className={navClassName}
+                aria-label={`Unread, ${countLabel(unreadCount)}`}
+              >
                 <CircleDot aria-hidden="true" />
                 <span>Unread</span>
+                <span aria-hidden="true" className="nav-count">
+                  {unreadCount}
+                </span>
+              </ViewTransitionNavLink>
+            </li>
+            <li>
+              <ViewTransitionNavLink
+                to="/read"
+                className={navClassName}
+                aria-label={`Read, ${countLabel(readCount)}`}
+              >
+                <RotateCcw aria-hidden="true" />
+                <span>Read</span>
+                <span aria-hidden="true" className="nav-count">
+                  {readCount}
+                </span>
               </ViewTransitionNavLink>
             </li>
             <li>
