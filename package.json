@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "predev": "vp run build",
     "dev": "varlock-wrangler dev",
     "dev:ui": "vp dev",
     "build": "tsc && vp build",
@@ -67,7 +68,7 @@
   "devEngines": {
     "packageManager": {
       "name": "npm",
-      "version": "11.16.0",
+      "version": ">=10.9.2",
       "onFail": "error"
     }
   },

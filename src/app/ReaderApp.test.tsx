@@ -41,7 +41,9 @@ function makeService(): ReaderService {
     removeFeed: vi.fn().mockResolvedValue(undefined),
     setRead: vi.fn().mockResolvedValue(undefined),
     setStarred: vi.fn().mockResolvedValue(undefined),
-  };
+    deleteArticle: vi.fn().mockResolvedValue(undefined),
+    purgeReadArticles: vi.fn().mockResolvedValue(undefined),
+  } as ReaderService;
 }
 
 function renderReader(path = "/all", service = makeService(), initialArticles = articles) {
@@ -54,6 +56,76 @@ function renderReader(path = "/all", service = makeService(), initialArticles = 
 }
 
 describe("ReaderApp", () => {
+  it("uses Unread for the root and unknown routes", () => {
+    const { unmount } = renderReader("/");
+    expect(screen.getByRole("heading", { level: 1, name: "Unread" })).toBeInTheDocument();
+    unmount();
+
+    renderReader("/does-not-exist");
+    expect(screen.getByRole("heading", { level: 1, name: "Unread" })).toBeInTheDocument();
+  });
+
+  it("shows synchronized view counts and a dedicated Read view", async () => {
+    const user = userEvent.setup();
+    renderReader("/unread");
+
+    expect(screen.getByRole("link", { name: "Unread, 1 article" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Read, 1 article" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Mark A first story as read" }));
+
+    expect(screen.getByRole("heading", { level: 1, name: "Unread" })).toBeInTheDocument();
+    expect(screen.getByText("No unread articles.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Unread, 0 articles" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Read, 2 articles" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("link", { name: "Read, 2 articles" }));
+    expect(screen.getByRole("heading", { level: 1, name: "Read" })).toBeInTheDocument();
+    expect(screen.getAllByRole("article")).toHaveLength(2);
+  });
+
+  it("restores and permanently deletes individual read articles", async () => {
+    const user = userEvent.setup();
+    const { service } = renderReader("/read");
+    const readArticle = screen.getByRole("article", { name: "Already read" });
+
+    await user.click(within(readArticle).getByRole("button", { name: "Restore Already read" }));
+    expect(service.setRead).toHaveBeenCalledWith("article-2", false);
+    expect(screen.queryByRole("article", { name: "Already read" })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("link", { name: "Unread, 2 articles" }));
+    const firstArticle = screen.getByRole("article", { name: "A first story" });
+    await user.click(
+      within(firstArticle).getByRole("button", { name: "Mark A first story as read" }),
+    );
+    await user.click(screen.getByRole("link", { name: "Read, 1 article" }));
+    await user.click(
+      within(screen.getByRole("article", { name: "A first story" })).getByRole("button", {
+        name: "Permanently delete A first story",
+      }),
+    );
+
+    expect(service.deleteArticle).toHaveBeenCalledWith("article-1");
+    expect(screen.queryByRole("article", { name: "A first story" })).not.toBeInTheDocument();
+  });
+
+  it("purges all read articles only after confirmation", async () => {
+    const user = userEvent.setup();
+    const service = makeService();
+    const confirm = vi.fn().mockReturnValueOnce(false).mockReturnValueOnce(true);
+    vi.stubGlobal("confirm", confirm);
+    renderReader("/read", service);
+
+    const purge = screen.getByRole("button", { name: "Permanently delete all 1 read article" });
+    await user.click(purge);
+    expect(service.purgeReadArticles).not.toHaveBeenCalled();
+    expect(screen.getByRole("article", { name: "Already read" })).toBeInTheDocument();
+
+    await user.click(purge);
+    expect(service.purgeReadArticles).toHaveBeenCalledOnce();
+    expect(screen.getByText("No read articles.")).toBeInTheDocument();
+    vi.unstubAllGlobals();
+  });
   it("presents labelled navigation, one main heading, and the article list", () => {
     renderReader();
 
@@ -103,7 +175,7 @@ describe("ReaderApp", () => {
     try {
       renderReader();
 
-      await user.click(screen.getByRole("link", { name: "Unread" }));
+      await user.click(screen.getByRole("link", { name: "Unread, 1 article" }));
 
       expect(startViewTransition).toHaveBeenCalledOnce();
       expect(screen.getByRole("heading", { level: 1, name: "Unread" })).toBeInTheDocument();

@@ -194,6 +194,14 @@ export class ReaderRepository {
     });
   }
 
+  async deleteArticle(id: ArticleId): Promise<void> {
+    await this.database.articles.delete(id);
+  }
+
+  async purgeReadArticles(): Promise<number> {
+    return this.database.articles.filter((article) => article.readAt !== undefined).delete();
+  }
+
   private async requireArticle(id: ArticleId): Promise<StoredArticle> {
     const article = await this.database.articles.get(id);
     if (!article) throw new Error(`Unknown article: ${id}`);

@@ -17,6 +17,8 @@ export interface ReaderService {
   removeFeed: (feedId: string) => Promise<void>;
   setRead: (articleId: string, read: boolean) => Promise<void>;
   setStarred: (articleId: string, starred: boolean) => Promise<void>;
+  deleteArticle: (articleId: string) => Promise<void>;
+  purgeReadArticles: () => Promise<void>;
 }
 
 export interface ReaderAppProps {

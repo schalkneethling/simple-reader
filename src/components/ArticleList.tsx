@@ -1,4 +1,4 @@
-import { Check, RotateCcw, Star } from "lucide-react";
+import { Check, RotateCcw, Star, Trash2 } from "lucide-react";
 import type { Article, Feed } from "../domain/types";
 import { htmlSummaryToText } from "./html-summary";
 import { ViewTransitionLink } from "./ViewTransitionLink";
@@ -9,6 +9,9 @@ interface ArticleListProps {
   feeds: Feed[];
   onSetRead: (article: Article, read: boolean) => Promise<void>;
   onSetStarred: (article: Article, starred: boolean) => Promise<void>;
+  onDeleteArticle?: (article: Article) => Promise<void>;
+  readView?: boolean;
+  emptyMessage?: string;
 }
 
 const dateFormatter = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" });
@@ -20,7 +23,16 @@ function displayDate(value?: string): string | null {
   return dateFormatter.format(date);
 }
 
-export function ArticleList({ title, articles, feeds, onSetRead, onSetStarred }: ArticleListProps) {
+export function ArticleList({
+  title,
+  articles,
+  feeds,
+  onSetRead,
+  onSetStarred,
+  onDeleteArticle,
+  readView = false,
+  emptyMessage = "Nothing to read here yet.",
+}: ArticleListProps) {
   const feedNames = new Map(feeds.map((feed) => [feed.id, feed.title]));
 
   return (
@@ -34,7 +46,7 @@ export function ArticleList({ title, articles, feeds, onSetRead, onSetStarred }:
       </header>
       {articles.length === 0 ? (
         <div className="empty-state">
-          <p>Nothing to read here yet.</p>
+          <p>{emptyMessage}</p>
           <p>Refresh your subscriptions or choose another view.</p>
         </div>
       ) : (
@@ -42,6 +54,9 @@ export function ArticleList({ title, articles, feeds, onSetRead, onSetStarred }:
           {articles.map((article) => {
             const headingId = `article-${article.id}-title`;
             const date = displayDate(article.publishedAt);
+            const readActionLabel = readView
+              ? `Restore ${article.title}`
+              : `Mark ${article.title} as ${article.readAt === undefined ? "read" : "unread"}`;
             return (
               <li key={article.id}>
                 <article
@@ -67,9 +82,7 @@ export function ArticleList({ title, articles, feeds, onSetRead, onSetStarred }:
                       <button
                         className="icon-button"
                         type="button"
-                        title={`Mark ${article.title} as ${
-                          article.readAt === undefined ? "read" : "unread"
-                        }`}
+                        title={readActionLabel}
                         onClick={() => onSetRead(article, article.readAt === undefined)}
                       >
                         {article.readAt === undefined ? (
@@ -77,11 +90,24 @@ export function ArticleList({ title, articles, feeds, onSetRead, onSetStarred }:
                         ) : (
                           <RotateCcw aria-hidden="true" />
                         )}
-                        <span className="visually-hidden">
-                          Mark {article.title} as {article.readAt === undefined ? "read" : "unread"}
-                        </span>
+                        <span className="visually-hidden">{readActionLabel}</span>
                       </button>
                     </li>
+                    {readView && onDeleteArticle !== undefined ? (
+                      <li>
+                        <button
+                          className="icon-button icon-button-danger"
+                          type="button"
+                          title={`Permanently delete ${article.title}`}
+                          onClick={() => onDeleteArticle(article)}
+                        >
+                          <Trash2 aria-hidden="true" />
+                          <span className="visually-hidden">
+                            Permanently delete {article.title}
+                          </span>
+                        </button>
+                      </li>
+                    ) : null}
                     <li>
                       <button
                         className="icon-button"

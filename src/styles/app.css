@@ -713,7 +713,7 @@
 
   .view-list {
     gap: var(--size-8);
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     overflow: visible;
   }
 
@@ -721,8 +721,13 @@
     border-inline-start: 0;
   }
 
+  .view-list > li {
+    display: flex;
+  }
+
   .view-list .nav-link {
     background: var(--color-surface-overlay-subtle);
+    flex: 1;
     flex-direction: column;
     font-size: var(--text-sm);
     gap: var(--size-4);

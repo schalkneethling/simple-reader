@@ -123,7 +123,7 @@ test("scopes reader navigation transitions to the reading content", async ({ pag
   await openReader(page, "/all");
 
   await expect(page.locator(".reader-content")).toHaveCSS("view-transition-name", "reader-content");
-  await page.getByRole("link", { name: "Unread" }).click();
+  await page.getByRole("link", { name: /^Unread,/ }).click();
 
   await expect(page).toHaveURL(/\/unread$/);
   await expect(page.getByRole("heading", { level: 1, name: "Unread" })).toBeVisible();
@@ -175,6 +175,18 @@ test("subscribes, reads, and updates local article state accessibly", async ({ p
       .locator("svg"),
   ).toHaveAttribute("fill", "currentColor");
 
+  await page.getByRole("link", { name: /^Read,/ }).click();
+  await expect(page.getByRole("article", { name: "A local-first reader" })).toBeVisible();
+  await page.reload();
+  await page.getByRole("link", { name: "Read, 1 article" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Read" })).toBeVisible();
+  await page
+    .getByRole("article", { name: "A local-first reader" })
+    .getByRole("button", { name: "Restore A local-first reader" })
+    .click();
+  await expect(page.getByText("No read articles.")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Unread, 1 article" })).toBeVisible();
+
   const accessibility = await new AxeBuilder({ page }).analyze();
   expect(accessibility.violations).toEqual([]);
 });
@@ -191,7 +203,7 @@ test("supports keyboard entry and keeps routed views usable at each viewport", a
     await page.keyboard.press("Tab");
     await expect(skipToMain).toBeFocused();
   }
-  await page.getByRole("link", { name: "Unread" }).click();
+  await page.getByRole("link", { name: /^Unread,/ }).click();
   await expect(page).toHaveURL(/\/unread$/);
   await expect(page.getByRole("heading", { level: 1, name: "Unread" })).toBeVisible();
 
@@ -201,7 +213,9 @@ test("supports keyboard entry and keeps routed views usable at each viewport", a
         - listitem:
           - link "All articles"
         - listitem:
-          - link "Unread"
+          - link "Unread, 0 articles"
+        - listitem:
+          - link "Read, 0 articles"
         - listitem:
           - link "Starred"
   `);
@@ -213,22 +227,29 @@ test("renders reader views as compact mobile navigation rows", async ({ page, is
   await openReader(page, "/unread");
 
   const allArticles = await page.getByRole("link", { name: "All articles" }).boundingBox();
-  const unread = await page.getByRole("link", { name: "Unread" }).boundingBox();
+  const unread = await page.getByRole("link", { name: /^Unread,/ }).boundingBox();
+  const read = await page.getByRole("link", { name: /^Read,/ }).boundingBox();
   const starred = await page.getByRole("link", { name: "Starred" }).boundingBox();
 
   expect(allArticles).not.toBeNull();
   expect(unread).not.toBeNull();
+  expect(read).not.toBeNull();
   expect(starred).not.toBeNull();
 
-  if (allArticles === null || unread === null || starred === null) {
+  if (allArticles === null || unread === null || read === null || starred === null) {
     throw new Error("Reader view tabs must be visible.");
   }
 
   expect(Math.abs(allArticles.y - unread.y)).toBeLessThan(1);
-  expect(Math.abs(unread.y - starred.y)).toBeLessThan(1);
+  expect(Math.abs(unread.y - read.y)).toBeLessThan(1);
+  expect(Math.abs(read.y - starred.y)).toBeLessThan(1);
+  expect(Math.abs(allArticles.height - unread.height)).toBeLessThan(1);
+  expect(Math.abs(unread.height - read.height)).toBeLessThan(1);
+  expect(Math.abs(read.height - starred.height)).toBeLessThan(1);
   expect(unread.x - (allArticles.x + allArticles.width)).toBeGreaterThanOrEqual(8);
-  expect(starred.x - (unread.x + unread.width)).toBeGreaterThanOrEqual(8);
-  await expect(page.getByRole("link", { name: "Unread" }).locator("svg")).toHaveCount(1);
+  expect(read.x - (unread.x + unread.width)).toBeGreaterThanOrEqual(8);
+  expect(starred.x - (read.x + read.width)).toBeGreaterThanOrEqual(8);
+  await expect(page.getByRole("link", { name: /^Unread,/ }).locator("svg")).toHaveCount(1);
   await expect(page.getByRole("link", { name: "All articles" })).toHaveCSS(
     "background-color",
     "rgba(255, 255, 255, 0.38)",
@@ -237,11 +258,11 @@ test("renders reader views as compact mobile navigation rows", async ({ page, is
     "background-color",
     "rgba(255, 255, 255, 0.38)",
   );
-  await expect(page.getByRole("link", { name: "Unread" })).toHaveCSS(
+  await expect(page.getByRole("link", { name: /^Unread,/ })).toHaveCSS(
     "background-color",
     "rgb(248, 249, 250)",
   );
-  await expect(page.getByRole("link", { name: "Unread" })).toHaveCSS("box-shadow", "none");
+  await expect(page.getByRole("link", { name: /^Unread,/ })).toHaveCSS("box-shadow", "none");
 });
 
 test("places the desktop subscription composer above the reading content", async ({
