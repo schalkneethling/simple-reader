@@ -34,8 +34,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - run: npm ci --ignore-scripts
-
       - uses: millionco/react-doctor@v2.2.6
         with:
           version: "0.7.7"
