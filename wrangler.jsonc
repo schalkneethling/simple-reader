@@ -3,7 +3,7 @@
   "name": "simple-reader",
   "main": "worker/index.ts",
   "compatibility_date": "2026-07-14",
-  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "ratelimits": [
     {
       "name": "FEED_RATE_LIMITER",
