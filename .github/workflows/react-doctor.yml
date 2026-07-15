@@ -37,6 +37,7 @@ jobs:
       - uses: millionco/react-doctor@v2.2.6
         with:
           version: "0.7.7"
+          scope: full
         # Advisory by default: React Doctor reports findings on every PR — a
         # sticky summary comment, inline review comments, and a commit status
         # with the health score — but never fails the check, so it won't red-X
@@ -45,7 +46,6 @@ jobs:
         # on new error-severity findings) or "warning" (fail on any finding).
         # Full reference: https://www.react.doctor/ci
         #   blocking: error          # Gate level: "none" (advisory, the default) | "warning" | "error"
-        #   scope: full              # On PRs, scan the whole project instead of just changed files
         #   comment: false           # Disable the sticky PR summary comment
         #   review-comments: false   # Disable inline review comments on changed lines
         #   commit-status: false     # Disable the commit status (score + counts, links to the run)

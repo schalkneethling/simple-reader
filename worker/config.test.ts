@@ -19,6 +19,6 @@ describe("Worker compatibility configuration", () => {
   it("builds SPA assets before starting Wrangler development", () => {
     const manifest = JSON.parse(packageJson) as { scripts?: Record<string, string> };
 
-    expect(manifest.scripts?.predev).toBe("npm run build");
+    expect(manifest.scripts?.predev).toBe("vp run build");
   });
 });
