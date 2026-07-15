@@ -237,6 +237,9 @@ describe("ReaderRepository", () => {
 
     await expect(repository.purgeReadArticles()).resolves.toBe(1);
     expect(await repository.listArticles()).toEqual([expect.objectContaining({ id: unread.id })]);
+    expect(await repository.getFeed(subscribed.id)).toEqual(
+      expect.objectContaining({ id: subscribed.id }),
+    );
   });
 
   it("keeps only the latest 200 non-starred articles per feed while retaining stars", async () => {

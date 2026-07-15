@@ -54,6 +54,9 @@ export function ArticleList({
           {articles.map((article) => {
             const headingId = `article-${article.id}-title`;
             const date = displayDate(article.publishedAt);
+            const readActionLabel = readView
+              ? `Restore ${article.title}`
+              : `Mark ${article.title} as ${article.readAt === undefined ? "read" : "unread"}`;
             return (
               <li key={article.id}>
                 <article
@@ -79,11 +82,7 @@ export function ArticleList({
                       <button
                         className="icon-button"
                         type="button"
-                        title={
-                          readView
-                            ? `Restore ${article.title}`
-                            : `Mark ${article.title} as ${article.readAt === undefined ? "read" : "unread"}`
-                        }
+                        title={readActionLabel}
                         onClick={() => onSetRead(article, article.readAt === undefined)}
                       >
                         {article.readAt === undefined ? (
@@ -91,11 +90,7 @@ export function ArticleList({
                         ) : (
                           <RotateCcw aria-hidden="true" />
                         )}
-                        <span className="visually-hidden">
-                          {readView
-                            ? `Restore ${article.title}`
-                            : `Mark ${article.title} as ${article.readAt === undefined ? "read" : "unread"}`}
-                        </span>
+                        <span className="visually-hidden">{readActionLabel}</span>
                       </button>
                     </li>
                     {readView && onDeleteArticle !== undefined ? (

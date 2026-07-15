@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Navigate, Route, Routes, useParams } from "react-router";
 import type { Article, Feed } from "../domain/types";
 import { AddFeedForm } from "../components/AddFeedForm";
@@ -45,6 +45,10 @@ export function ReaderApp({ service, initialFeeds = [], initialArticles = [] }: 
   const [busyFeedId, setBusyFeedId] = useState<string | null>(null);
   const [operationError, setOperationError] = useState<string | null>(null);
   const [operationStatus, setOperationStatus] = useState<string | null>(null);
+  const readArticles = useMemo(
+    () => articles.filter((article) => article.readAt !== undefined),
+    [articles],
+  );
 
   useEffect(() => {
     if (service.refreshStale === undefined) return undefined;
@@ -174,7 +178,7 @@ export function ReaderApp({ service, initialFeeds = [], initialArticles = [] }: 
   );
 
   const purgeReadArticles = useCallback(async () => {
-    const readCount = articles.filter((article) => article.readAt !== undefined).length;
+    const readCount = readArticles.length;
     if (
       !window.confirm(
         `Permanently delete ${readCount} read ${readCount === 1 ? "article" : "articles"}? This cannot be undone.`,
@@ -188,7 +192,7 @@ export function ReaderApp({ service, initialFeeds = [], initialArticles = [] }: 
     } catch {
       setOperationError("Could not delete the read articles.");
     }
-  }, [articles, service]);
+  }, [readArticles, service]);
 
   const routeProps = { articles, feeds, onSetRead: setRead, onSetStarred: setStarred };
 
@@ -245,23 +249,20 @@ export function ReaderApp({ service, initialFeeds = [], initialArticles = [] }: 
                 path={READER_ROUTES.read}
                 element={
                   <>
-                    {articles.some((article) => article.readAt !== undefined) ? (
+                    {readArticles.length > 0 ? (
                       <button
                         className="danger-action"
                         type="button"
                         onClick={() => void purgeReadArticles()}
                       >
-                        Permanently delete all{" "}
-                        {articles.filter((article) => article.readAt !== undefined).length} read{" "}
-                        {articles.filter((article) => article.readAt !== undefined).length === 1
-                          ? "article"
-                          : "articles"}
+                        Permanently delete all {readArticles.length} read{" "}
+                        {readArticles.length === 1 ? "article" : "articles"}
                       </button>
                     ) : null}
                     <ArticleList
                       title="Read"
                       {...routeProps}
-                      articles={articles.filter((article) => article.readAt !== undefined)}
+                      articles={readArticles}
                       onDeleteArticle={deleteArticle}
                       readView
                       emptyMessage="No read articles."
