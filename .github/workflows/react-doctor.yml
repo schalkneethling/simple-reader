@@ -34,7 +34,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: millionco/react-doctor@v2.2.6
+      - uses: millionco/react-doctor@v2.2.7
         with:
           version: "0.7.7"
           scope: full
