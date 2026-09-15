@@ -30,7 +30,7 @@
   "dependencies": {
     "@varlock/cloudflare-integration": "^1.5.0",
     "dexie": "^4.4.4",
-    "dompurify": "^3.4.12",
+    "dompurify": "^3.4.13",
     "fast-xml-parser": "^5.10.0",
     "lucide-react": "^1.24.0",
     "react": "^19.2.8",
