@@ -6,7 +6,7 @@ import { ArticleList } from "../components/ArticleList";
 import { ArticleView } from "../components/ArticleView";
 import { ReaderSidebar } from "../components/ReaderSidebar";
 import { ReaderTopbar } from "../components/ReaderTopbar";
-import type { ReaderAppProps, SubscriptionResult } from "./contracts";
+import type { ReaderAppProps, SubscriptionResult, SubscriptionTimeframe } from "./contracts";
 import { READER_ROUTES } from "./routes";
 
 interface DynamicRouteProps {
@@ -74,8 +74,8 @@ export function ReaderApp({ service, initialFeeds = [], initialArticles = [] }: 
   }, [service]);
 
   const addSubscription = useCallback(
-    async (url: string): Promise<SubscriptionResult> => {
-      const result = await service.addFeed(url);
+    async (url: string, timeframe: SubscriptionTimeframe): Promise<SubscriptionResult> => {
+      const result = await service.addFeed(url, timeframe);
       if (result.status === "added") {
         setFeeds((current) => [
           ...current.filter((feed) => feed.id !== result.feed.id),

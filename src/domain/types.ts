@@ -8,6 +8,7 @@ export interface Feed {
   title: string;
   description?: string;
   addedAt: string;
+  articlesSince?: string;
   refreshedAt?: string;
   error?: string;
 }
