@@ -1,10 +1,10 @@
 import { useId, useState } from "react";
 import { Plus } from "lucide-react";
 import type { FeedChoice } from "../domain/types";
-import type { SubscriptionResult } from "../app/contracts";
+import type { SubscriptionResult, SubscriptionTimeframe } from "../app/contracts";
 
 interface AddFeedFormProps {
-  onSubscribe: (url: string) => Promise<SubscriptionResult>;
+  onSubscribe: (url: string, timeframe: SubscriptionTimeframe) => Promise<SubscriptionResult>;
 }
 
 function normalizeHttpsUrl(value: string): string | null {
@@ -26,8 +26,10 @@ function normalizeHttpsUrl(value: string): string | null {
 
 export function AddFeedForm({ onSubscribe }: AddFeedFormProps) {
   const inputId = useId();
+  const timeframeId = useId();
   const errorId = useId();
   const [value, setValue] = useState("");
+  const [timeframe, setTimeframe] = useState<SubscriptionTimeframe>("7-days");
   const [error, setError] = useState<string | null>(null);
   const [choices, setChoices] = useState<FeedChoice[]>([]);
   const [submitting, setSubmitting] = useState(false);
@@ -36,7 +38,7 @@ export function AddFeedForm({ onSubscribe }: AddFeedFormProps) {
     setSubmitting(true);
     setError(null);
     try {
-      const result = await onSubscribe(url);
+      const result = await onSubscribe(url, timeframe);
       if (result.status === "error") {
         setError(result.message);
       } else if (result.status === "choices") {
@@ -65,6 +67,22 @@ export function AddFeedForm({ onSubscribe }: AddFeedFormProps) {
 
   return (
     <form className="add-feed" aria-label="Add a subscription" onSubmit={handleSubmit} noValidate>
+      <label htmlFor={timeframeId}>Load posts from</label>
+      <select
+        id={timeframeId}
+        value={timeframe}
+        disabled={submitting}
+        onChange={(event) => {
+          const selected = event.currentTarget.value;
+          if (selected === "7-days" || selected === "30-days" || selected === "all") {
+            setTimeframe(selected);
+          }
+        }}
+      >
+        <option value="7-days">Last 7 days</option>
+        <option value="30-days">Last 30 days</option>
+        <option value="all">All time</option>
+      </select>
       <label className="visually-hidden" htmlFor={inputId}>
         Feed or website URL
       </label>
@@ -75,6 +93,7 @@ export function AddFeedForm({ onSubscribe }: AddFeedFormProps) {
           inputMode="url"
           autoComplete="url"
           value={value}
+          disabled={submitting}
           aria-describedby={error === null ? undefined : errorId}
           aria-invalid={error === null ? undefined : true}
           onChange={(event) => setValue(event.currentTarget.value)}
@@ -91,7 +110,7 @@ export function AddFeedForm({ onSubscribe }: AddFeedFormProps) {
         </p>
       )}
       {choices.length === 0 ? null : (
-        <fieldset className="feed-choices">
+        <fieldset className="feed-choices" disabled={submitting}>
           <legend>Choose a feed</legend>
           <ul>
             {choices.map((choice) => (

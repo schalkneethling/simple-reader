@@ -9,6 +9,7 @@ remote feeds.
 ## Features
 
 - Subscribe directly to RSS or Atom feeds, or discover feeds from a website URL.
+- Choose the last 7 days (default), last 30 days, or all available posts when subscribing.
 - Browse all, unread, starred, and per-feed article views.
 - Keep subscriptions, read state, and starred articles in IndexedDB.
 - Refresh stale feeds on startup and window focus, with manual per-feed and global refreshes.
@@ -17,6 +18,10 @@ remote feeds.
 - Work across desktop and narrow-screen layouts with accessible, semantic controls.
 
 ## Architecture
+
+Time-limited subscriptions exclude posts without a valid publication date. Their initial cutoff
+is retained on refresh, so older posts are not imported later. All time includes undated posts;
+the existing storage limit of 200 unstarred articles per feed still applies.
 
 Simple Reader has two independently deployed parts:
 

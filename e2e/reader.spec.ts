@@ -13,6 +13,7 @@ const apiResponse = {
       guid: "first",
       url: "https://news.example/articles/first",
       title: "A local-first reader",
+      publishedAt: "2026-07-14T09:00:00.000Z",
       excerpt: "A focused article.",
       contentHtml:
         '<p data-publisher-embed="ignored">Safe <strong>content</strong>.</p><script>alert(1)</script><a href="javascript:alert(1)">Unsafe link</a><a href="https://news.example/story">Safe link</a><img src="https://127.0.0.1/tracker">',
@@ -22,6 +23,7 @@ const apiResponse = {
 } as const;
 
 test.beforeEach(async ({ page }) => {
+  await page.clock.setFixedTime("2026-07-14T10:00:00.000Z");
   await page.route("**/api/feed?url=**", async (route) => {
     await route.fulfill({
       status: 200,
@@ -35,6 +37,51 @@ async function openReader(page: Page, path: string) {
   await page.goto(path);
   await expect(page.getByRole("navigation", { name: "Reader views" })).toBeVisible({
     timeout: 30_000,
+  });
+}
+
+for (const [timeframe, expectedCount] of [
+  ["Last 7 days", 1],
+  ["Last 30 days", 2],
+  ["All time", 4],
+] as const) {
+  test(`loads ${timeframe} and preserves the subscription cutoff after reload`, async ({
+    page,
+  }) => {
+    await page.route("**/api/feed?url=**", async (route) => {
+      await route.fulfill({
+        json: {
+          ...apiResponse,
+          articles: [
+            ...apiResponse.articles,
+            {
+              guid: "fortnight",
+              url: "https://news.example/fortnight",
+              title: "Two weeks ago",
+              publishedAt: "2026-06-30T10:00:00.000Z",
+            },
+            {
+              guid: "archive",
+              url: "https://news.example/archive",
+              title: "From the archive",
+              publishedAt: "2026-05-01T10:00:00.000Z",
+            },
+            { guid: "undated", url: "https://news.example/undated", title: "Undated post" },
+          ],
+        },
+      });
+    });
+    await openReader(page, "/all");
+    await page
+      .getByRole("combobox", { name: "Load posts from" })
+      .selectOption({ label: timeframe });
+    await page.getByLabel("Feed or website URL").fill("https://news.example/feed.xml");
+    await page.getByRole("button", { name: "Add feed" }).click();
+    await expect(page.getByRole("article")).toHaveCount(expectedCount);
+    await page.reload();
+    await page.getByRole("button", { name: "Refresh all feeds" }).click();
+    await expect(page.getByRole("button", { name: "Refresh all feeds" })).toBeEnabled();
+    await expect(page.getByRole("article")).toHaveCount(expectedCount);
   });
 }
 
@@ -307,7 +354,9 @@ test("grounds desktop navigation and the subscription composer", async ({ page, 
   const button = form.getByRole("button", { name: "Add feed" });
   const emptyState = page.locator(".empty-state");
 
-  await expect(form.locator("label")).toHaveClass("visually-hidden");
+  await expect(form.locator("label").filter({ hasText: "Feed or website URL" })).toHaveClass(
+    "visually-hidden",
+  );
   await expect(allArticles.locator("svg")).toHaveCount(1);
   await expect(allArticles).toHaveCSS("background-color", "rgb(248, 249, 250)");
 
@@ -383,20 +432,20 @@ test("aligns the sidebar heading with the composer and keeps empty copy on the c
   await openReader(page, "/all");
 
   const navigation = await page.getByRole("navigation", { name: "Reader views" }).boundingBox();
-  const input = await page.getByLabel("Feed or website URL").boundingBox();
+  const composer = await page.getByRole("form", { name: "Add a subscription" }).boundingBox();
   const heading = await page.getByRole("heading", { level: 1, name: "All articles" }).boundingBox();
   const emptyCopy = await page.getByText("Nothing to read here yet.").boundingBox();
 
   expect(navigation).not.toBeNull();
-  expect(input).not.toBeNull();
+  expect(composer).not.toBeNull();
   expect(heading).not.toBeNull();
   expect(emptyCopy).not.toBeNull();
 
-  if (navigation === null || input === null || heading === null || emptyCopy === null) {
+  if (navigation === null || composer === null || heading === null || emptyCopy === null) {
     throw new Error("The reader shell must show its navigation, heading, and empty state.");
   }
 
-  expect(Math.abs(navigation.y - input.y)).toBeLessThanOrEqual(1);
+  expect(Math.abs(navigation.y - composer.y)).toBeLessThanOrEqual(1);
   expect(Math.abs(emptyCopy.x - heading.x)).toBeLessThanOrEqual(1);
 });
 

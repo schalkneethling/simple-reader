@@ -25,9 +25,10 @@ function storage(initialFeeds: Feed[] = []): ReaderStorage {
   return {
     listFeeds: vi.fn(async () => [...feeds]),
     listArticles: vi.fn(async () => [...articles]),
-    subscribeFeed: vi.fn(async (value: NormalizedFeed) => {
+    subscribeFeed: vi.fn(async (value: NormalizedFeed & Pick<Feed, "articlesSince">) => {
       const stored = feed(value.title);
       stored.url = value.url;
+      stored.articlesSince = value.articlesSince;
       feeds.push(stored);
       return stored;
     }),
@@ -66,6 +67,50 @@ function ready(title: string): FeedApiResponse {
 }
 
 describe("LocalReaderService", () => {
+  it("imports the selected history including its boundary and preserves it on refresh", async () => {
+    const originalNow = Date.now;
+    Date.now = () => Date.parse("2026-09-24T12:00:00.000Z");
+    try {
+      for (const timeframe of ["7-days", "30-days", "all"] as const) {
+        const repository = storage();
+        const dates = [
+          "2026-09-24T11:00:00.000Z",
+          "2026-09-17T12:00:00.000Z",
+          "2026-08-25T12:00:00.000Z",
+          "2026-08-25T11:59:59.999Z",
+          "invalid",
+          undefined,
+        ];
+        const response: FeedApiResponse = {
+          status: "ready",
+          feed: { title: "news", url: "https://news.example/feed" },
+          articles: dates.map((publishedAt, index) => ({
+            title: `Article ${index}`,
+            url: `https://news.example/${index}`,
+            publishedAt,
+          })),
+          fetchedAt: "2026-09-24T12:00:00.000Z",
+        };
+        const service = new LocalReaderService(repository, async () => response);
+        const result = await service.addFeed(response.feed.url, timeframe);
+        const expected = timeframe === "7-days" ? 2 : timeframe === "30-days" ? 3 : 6;
+        expect(result.status === "added" && result.articles.length).toBe(expected);
+        if (timeframe !== "all") {
+          expect((await repository.listFeeds())[0]?.articlesSince).toBe(
+            timeframe === "7-days" ? dates[1] : dates[2],
+          );
+        }
+        // A fresh service uses the stored cutoff, even after time passes.
+        Date.now = () => Date.parse("2026-10-24T12:00:00.000Z");
+        await new LocalReaderService(repository, async () => response).refresh();
+        expect((await repository.listArticles()).length).toBe(expected * 2);
+        Date.now = () => Date.parse("2026-09-24T12:00:00.000Z");
+      }
+    } finally {
+      Date.now = originalNow;
+    }
+  });
+
   it("persists individual and bulk read-article deletion", async () => {
     const repository = storage();
     const service = new LocalReaderService(repository, vi.fn());

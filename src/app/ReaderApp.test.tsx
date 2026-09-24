@@ -4,7 +4,7 @@ import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vite-plus/test";
 import type { Article, Feed } from "../domain/types";
 import { ReaderApp } from "./ReaderApp";
-import type { ReaderService } from "./contracts";
+import type { ReaderService, SubscriptionResult } from "./contracts";
 
 const feed: Feed = {
   id: "feed-1",
@@ -56,6 +56,96 @@ function renderReader(path = "/all", service = makeService(), initialArticles = 
 }
 
 describe("ReaderApp", () => {
+  it("defaults new subscriptions to the last seven days", async () => {
+    const user = userEvent.setup();
+    const { service } = renderReader();
+    const timeframe = screen.getByRole("combobox", { name: "Load posts from" });
+
+    expect(timeframe).toHaveValue("7-days");
+    expect(
+      within(timeframe)
+        .getAllByRole("option")
+        .map((option) => option.textContent),
+    ).toEqual(["Last 7 days", "Last 30 days", "All time"]);
+    await user.type(screen.getByLabelText("Feed or website URL"), "https://example.com/feed");
+    await user.click(screen.getByRole("button", { name: "Add feed" }));
+    expect(service.addFeed).toHaveBeenCalledWith("https://example.com/feed", "7-days");
+  });
+
+  it("retains the selected timeframe through discovery and a failed subscription retry", async () => {
+    const user = userEvent.setup();
+    const service = makeService();
+    service.addFeed = vi
+      .fn()
+      .mockResolvedValueOnce({
+        status: "choices",
+        choices: [{ title: "News feed", url: "https://example.com/news.xml" }],
+      })
+      .mockResolvedValueOnce({ status: "error", message: "Try again" })
+      .mockResolvedValueOnce({ status: "added", feed, articles });
+    renderReader("/all", service);
+    await user.selectOptions(screen.getByRole("combobox", { name: "Load posts from" }), "30-days");
+    await user.type(screen.getByLabelText("Feed or website URL"), "https://example.com");
+    await user.click(screen.getByRole("button", { name: "Add feed" }));
+    await user.click(await screen.findByRole("button", { name: /News feed/ }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Try again");
+    await user.click(screen.getByRole("button", { name: /News feed/ }));
+    expect(service.addFeed).toHaveBeenNthCalledWith(1, "https://example.com/", "30-days");
+    expect(service.addFeed).toHaveBeenNthCalledWith(2, "https://example.com/news.xml", "30-days");
+    expect(service.addFeed).toHaveBeenNthCalledWith(3, "https://example.com/news.xml", "30-days");
+  });
+
+  it("passes all time and disables subscription controls while adding", async () => {
+    const user = userEvent.setup();
+    const service = makeService();
+    let finish: ((result: { status: "error"; message: string }) => void) | undefined;
+    service.addFeed = vi.fn(
+      () =>
+        new Promise<SubscriptionResult>((resolve) => {
+          finish = resolve;
+        }),
+    );
+    renderReader("/all", service);
+    const timeframe = screen.getByRole("combobox", { name: "Load posts from" });
+    await user.selectOptions(timeframe, "all");
+    await user.type(screen.getByLabelText("Feed or website URL"), "https://example.com/feed");
+    await user.click(screen.getByRole("button", { name: "Add feed" }));
+    expect(service.addFeed).toHaveBeenCalledWith("https://example.com/feed", "all");
+    expect(timeframe).toBeDisabled();
+    expect(screen.getByLabelText("Feed or website URL")).toBeDisabled();
+    finish?.({ status: "error", message: "Try again" });
+    await waitFor(() => expect(timeframe).toBeEnabled());
+    expect(timeframe).toHaveValue("all");
+  });
+
+  it("prevents duplicate requests while subscribing to a discovered feed", async () => {
+    const user = userEvent.setup();
+    const service = makeService();
+    let finish: ((result: { status: "error"; message: string }) => void) | undefined;
+    service.addFeed = vi
+      .fn()
+      .mockResolvedValueOnce({
+        status: "choices",
+        choices: [{ title: "News feed", url: "https://example.com/news.xml" }],
+      })
+      .mockImplementationOnce(
+        () =>
+          new Promise<SubscriptionResult>((resolve) => {
+            finish = resolve;
+          }),
+      );
+    renderReader("/all", service);
+    await user.type(screen.getByLabelText("Feed or website URL"), "https://example.com");
+    await user.click(screen.getByRole("button", { name: "Add feed" }));
+    const choice = await screen.findByRole("button", { name: "News feed" });
+    await user.click(choice);
+    expect(choice).toBeDisabled();
+    await user.click(choice);
+    expect(service.addFeed).toHaveBeenCalledTimes(2);
+    finish?.({ status: "error", message: "Try again" });
+    await waitFor(() => expect(choice).toBeEnabled());
+  });
+
   it("uses Unread for the root and unknown routes", () => {
     const { unmount } = renderReader("/");
     expect(screen.getByRole("heading", { level: 1, name: "Unread" })).toBeInTheDocument();

@@ -5,12 +5,17 @@ import type {
   NormalizedArticle,
   NormalizedFeed,
 } from "../domain/types";
-import type { ReaderService, RefreshResult, SubscriptionResult } from "./contracts";
+import type {
+  ReaderService,
+  RefreshResult,
+  SubscriptionResult,
+  SubscriptionTimeframe,
+} from "./contracts";
 
 export interface ReaderStorage {
   listFeeds: () => Promise<Feed[]>;
   listArticles: () => Promise<Article[]>;
-  subscribeFeed: (feed: NormalizedFeed) => Promise<Feed>;
+  subscribeFeed: (feed: NormalizedFeed & Pick<Feed, "articlesSince">) => Promise<Feed>;
   ingestArticles: (
     feedId: string,
     articles: NormalizedArticle[],
@@ -35,15 +40,28 @@ export class LocalReaderService implements ReaderService {
     this.requestFeed = requestFeed;
   }
 
-  async addFeed(url: string): Promise<SubscriptionResult> {
+  async addFeed(
+    url: string,
+    timeframe: SubscriptionTimeframe = "all",
+  ): Promise<SubscriptionResult> {
+    const subscribedAt = Date.now();
     const response = await this.requestFeed(url);
     if (response.status === "choices") return response;
     if (response.status === "error") return { status: "error", message: response.message };
 
-    const feed = await this.storage.subscribeFeed(response.feed);
+    const feed = await this.storage.subscribeFeed({
+      ...response.feed,
+      ...(timeframe === "all"
+        ? {}
+        : {
+            articlesSince: new Date(
+              subscribedAt - (timeframe === "7-days" ? 7 : 30) * 24 * 60 * 60 * 1000,
+            ).toISOString(),
+          }),
+    });
     const articles = await this.storage.ingestArticles(
       feed.id,
-      response.articles,
+      filterSubscriptionArticles(response.articles, feed.articlesSince),
       response.fetchedAt,
     );
     return { status: "added", feed, articles };
@@ -100,7 +118,11 @@ export class LocalReaderService implements ReaderService {
     try {
       const response = await this.requestFeed(feed.url);
       if (response.status === "ready") {
-        await this.storage.ingestArticles(feed.id, response.articles, response.fetchedAt);
+        await this.storage.ingestArticles(
+          feed.id,
+          filterSubscriptionArticles(response.articles, feed.articlesSince),
+          response.fetchedAt,
+        );
         await this.storage.updateFeed(feed.id, {
           title: response.feed.title,
           description: response.feed.description,
@@ -119,6 +141,17 @@ export class LocalReaderService implements ReaderService {
       await this.storage.updateFeed(feed.id, { error: "The feed could not be refreshed." });
     }
   }
+}
+
+function filterSubscriptionArticles(
+  articles: NormalizedArticle[],
+  articlesSince?: string,
+): NormalizedArticle[] {
+  if (articlesSince === undefined) return articles;
+  const cutoff = Date.parse(articlesSince);
+  return articles.filter(
+    (article) => article.publishedAt !== undefined && Date.parse(article.publishedAt) >= cutoff,
+  );
 }
 
 async function runWithConcurrency<Item>(

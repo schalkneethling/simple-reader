@@ -85,6 +85,21 @@ describe("ReaderRepository", () => {
     );
   });
 
+  it("preserves the initial history cutoff when subscribing again", async () => {
+    const first = await repository.subscribeFeed({
+      ...feed,
+      articlesSince: "2026-09-17T12:00:00.000Z",
+    });
+    await repository.subscribeFeed({ ...feed, articlesSince: "2026-08-25T12:00:00.000Z" });
+    expect((await repository.getFeed(first.id))?.articlesSince).toBe("2026-09-17T12:00:00.000Z");
+  });
+
+  it("keeps an existing all-history subscription when a duplicate requests a cutoff", async () => {
+    const first = await repository.subscribeFeed(feed);
+    await repository.subscribeFeed({ ...feed, articlesSince: "2026-09-17T12:00:00.000Z" });
+    expect((await repository.getFeed(first.id))?.articlesSince).toBeUndefined();
+  });
+
   it("rejects subscription URLs that are not absolute HTTPS URLs", async () => {
     await expect(
       repository.subscribeFeed({ ...feed, url: "http://example.com/feed.xml" }),
