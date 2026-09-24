@@ -34,7 +34,10 @@ export class ReaderRepository {
     await this.database.delete();
   }
 
-  async subscribeFeed(feed: NormalizedFeed, addedAt = new Date().toISOString()): Promise<Feed> {
+  async subscribeFeed(
+    feed: NormalizedFeed & Pick<Feed, "articlesSince">,
+    addedAt = new Date().toISOString(),
+  ): Promise<Feed> {
     const url = requireHttpsUrl(feed.url);
     const id = stableId("feed", url);
     const existing = await this.database.feeds.get(id);
@@ -43,6 +46,7 @@ export class ReaderRepository {
       url,
       title: requiredText(feed.title, "Feed title"),
       addedAt: existing?.addedAt ?? addedAt,
+      ...optionalText("articlesSince", existing ? existing.articlesSince : feed.articlesSince),
       ...optionalText("siteUrl", normalizeOptionalHttpsUrl(feed.siteUrl)),
       ...optionalText("description", feed.description),
       ...optionalText("refreshedAt", existing?.refreshedAt),

@@ -1,5 +1,7 @@
 import type { Article, Feed, FeedChoice } from "../domain/types";
 
+export type SubscriptionTimeframe = "7-days" | "30-days" | "all";
+
 export type SubscriptionResult =
   | { status: "added"; feed: Feed; articles: Article[] }
   | { status: "choices"; choices: FeedChoice[] }
@@ -11,7 +13,7 @@ export interface RefreshResult {
 }
 
 export interface ReaderService {
-  addFeed: (url: string) => Promise<SubscriptionResult>;
+  addFeed: (url: string, timeframe?: SubscriptionTimeframe) => Promise<SubscriptionResult>;
   refresh: (feedId?: string) => Promise<RefreshResult>;
   refreshStale?: (now?: Date) => Promise<RefreshResult>;
   removeFeed: (feedId: string) => Promise<void>;

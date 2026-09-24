@@ -45,7 +45,8 @@
   }
 
   button,
-  input {
+  input,
+  select {
     font: inherit;
   }
 
@@ -395,7 +396,8 @@
     gap: var(--size-8);
   }
 
-  .add-feed input {
+  .add-feed input,
+  .add-feed select {
     background: var(--color-surface);
     border: var(--size-1) solid var(--color-border-strong);
     border-radius: var(--radius-md);
@@ -830,6 +832,7 @@
 @media (prefers-contrast: more) {
   button,
   input,
+  select,
   .article-card {
     border-color: currentcolor;
   }
