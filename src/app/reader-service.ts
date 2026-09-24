@@ -61,7 +61,7 @@ export class LocalReaderService implements ReaderService {
     });
     const articles = await this.storage.ingestArticles(
       feed.id,
-      filterSubscriptionArticles(response.articles, feed.articlesSince),
+      filterSubscriptionArticles(response.articles, feed.articlesSince, subscribedAt),
       response.fetchedAt,
     );
     return { status: "added", feed, articles };
@@ -120,7 +120,11 @@ export class LocalReaderService implements ReaderService {
       if (response.status === "ready") {
         await this.storage.ingestArticles(
           feed.id,
-          filterSubscriptionArticles(response.articles, feed.articlesSince),
+          filterSubscriptionArticles(
+            response.articles,
+            feed.articlesSince,
+            Date.parse(response.fetchedAt),
+          ),
           response.fetchedAt,
         );
         await this.storage.updateFeed(feed.id, {
@@ -145,13 +149,16 @@ export class LocalReaderService implements ReaderService {
 
 function filterSubscriptionArticles(
   articles: NormalizedArticle[],
-  articlesSince?: string,
+  articlesSince: string | undefined,
+  articlesUntil: number,
 ): NormalizedArticle[] {
   if (articlesSince === undefined) return articles;
   const cutoff = Date.parse(articlesSince);
-  return articles.filter(
-    (article) => article.publishedAt !== undefined && Date.parse(article.publishedAt) >= cutoff,
-  );
+  return articles.filter((article) => {
+    if (article.publishedAt === undefined) return false;
+    const publishedAt = Date.parse(article.publishedAt);
+    return publishedAt >= cutoff && publishedAt <= articlesUntil;
+  });
 }
 
 async function runWithConcurrency<Item>(

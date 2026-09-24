@@ -67,6 +67,54 @@ function ready(title: string): FeedApiResponse {
 }
 
 describe("LocalReaderService", () => {
+  it("excludes future posts until a later refresh reaches their publication time", async () => {
+    const originalNow = Date.now;
+    Date.now = () => Date.parse("2026-09-24T12:00:00.000Z");
+    try {
+      for (const timeframe of ["7-days", "30-days", "all"] as const) {
+        const repository = storage();
+        const response: FeedApiResponse = {
+          status: "ready",
+          feed: { title: "news", url: "https://news.example/feed" },
+          articles: [
+            {
+              title: "Now",
+              url: "https://news.example/now",
+              publishedAt: "2026-09-24T12:00:00.000Z",
+            },
+            {
+              title: "Later",
+              url: "https://news.example/later",
+              publishedAt: "2026-09-25T12:00:00.000Z",
+            },
+          ],
+          fetchedAt: "2026-09-24T12:00:00.000Z",
+        };
+        const service = new LocalReaderService(repository, async () => response);
+        const result = await service.addFeed(response.feed.url, timeframe);
+        expect(result.status === "added" && result.articles.map(({ title }) => title)).toEqual(
+          timeframe === "all" ? ["Now", "Later"] : ["Now"],
+        );
+
+        // A cached fetch still excludes the future post, even when the client clock advances.
+        Date.now = () => Date.parse("2026-09-26T12:00:00.000Z");
+        await service.refresh();
+        expect(
+          (await repository.listArticles()).filter(({ title }) => title === "Later"),
+        ).toHaveLength(timeframe === "all" ? 2 : 0);
+
+        response.fetchedAt = "2026-09-25T12:00:00.000Z";
+        await service.refresh();
+        expect(
+          (await repository.listArticles()).filter(({ title }) => title === "Later"),
+        ).toHaveLength(timeframe === "all" ? 3 : 1);
+        Date.now = () => Date.parse("2026-09-24T12:00:00.000Z");
+      }
+    } finally {
+      Date.now = originalNow;
+    }
+  });
+
   it("imports the selected history including its boundary and preserves it on refresh", async () => {
     const originalNow = Date.now;
     Date.now = () => Date.parse("2026-09-24T12:00:00.000Z");
