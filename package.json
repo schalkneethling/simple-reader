@@ -52,7 +52,7 @@
     "@vitejs/plugin-react": "^6.0.3",
     "fake-indexeddb": "^6.2.5",
     "happy-dom": "^20.10.6",
-    "react-doctor": "^0.7.7",
+    "react-doctor": "^0.9.14",
     "stylelint": "^17.14.0",
     "stylelint-config-standard": "^40.0.0",
     "stylelint-order": "^8.1.1",
