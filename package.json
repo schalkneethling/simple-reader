@@ -58,12 +58,12 @@
     "stylelint-order": "^8.1.1",
     "stylelint-plugin-use-baseline": "^1.4.6",
     "typescript": "~6.0.2",
-    "vite": "npm:@voidzero-dev/vite-plus-core@0.2.4",
-    "vite-plus": "0.2.4",
+    "vite": "npm:@voidzero-dev/vite-plus-core@0.3.3",
+    "vite-plus": "0.3.3",
     "wrangler": "^4.110.0"
   },
   "overrides": {
-    "vite": "npm:@voidzero-dev/vite-plus-core@0.2.4"
+    "vite": "npm:@voidzero-dev/vite-plus-core@0.3.3"
   },
   "devEngines": {
     "packageManager": {
