@@ -28,20 +28,20 @@
     "doctor": "npx react-doctor@latest"
   },
   "dependencies": {
-    "@varlock/cloudflare-integration": "^1.5.0",
+    "@varlock/cloudflare-integration": "^1.6.0",
     "dexie": "^4.4.4",
-    "dompurify": "^3.4.13",
+    "dompurify": "^3.4.17",
     "fast-xml-parser": "^5.11.1",
     "lucide-react": "^1.24.0",
     "react": "^19.2.8",
     "react-dom": "^19.3.0",
-    "react-router": "^8.3.0",
-    "varlock": "^1.19.0"
+    "react-router": "^8.5.0",
+    "varlock": "^1.21.0"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.12.1",
     "@cloudflare/vitest-pool-workers": "^0.22.0",
-    "@cloudflare/workers-types": "^5.20260714.1",
+    "@cloudflare/workers-types": "^5.20261019.1",
     "@playwright/test": "^1.62.1",
     "@schalkneethling/stylelint-plugin-css-property-type-validator": "^0.1.0-beta.1",
     "@testing-library/jest-dom": "^6.9.1",
@@ -53,7 +53,7 @@
     "fake-indexeddb": "^6.2.5",
     "happy-dom": "^20.10.6",
     "react-doctor": "^0.9.14",
-    "stylelint": "^17.14.0",
+    "stylelint": "^17.16.0",
     "stylelint-config-standard": "^40.0.0",
     "stylelint-order": "^8.1.1",
     "stylelint-plugin-use-baseline": "^1.4.6",
