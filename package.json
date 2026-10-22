@@ -28,7 +28,7 @@
     "doctor": "npx react-doctor@latest"
   },
   "dependencies": {
-    "@varlock/cloudflare-integration": "^1.5.0",
+    "@varlock/cloudflare-integration": "^1.6.0",
     "dexie": "^4.4.4",
     "dompurify": "^3.4.13",
     "fast-xml-parser": "^5.11.1",
