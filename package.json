@@ -51,7 +51,7 @@
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.1",
     "fake-indexeddb": "^6.2.5",
-    "happy-dom": "^20.10.6",
+    "happy-dom": "^21.0.4",
     "react-doctor": "^0.9.14",
     "stylelint": "^17.16.0",
     "stylelint-config-standard": "^40.0.0",
